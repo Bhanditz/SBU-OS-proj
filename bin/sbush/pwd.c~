@@ -1,0 +1,19 @@
+int pwd(char *path) {
+	char *pathName;
+	
+	if((pathName = malloc(NAME_MAX)) == NULL) {
+		perror("[ERROR]: malloc error \n");
+		return -1;
+	}
+	if(getcwd(pathName, NAME_MAX) < 0) {
+		perror("[ERROR]: getcwd error \n");
+		return -1;
+	}
+	printf("current working directory : %s\n", pathName);
+	if(strcpy(path, pathName) == NULL) {
+		perror("[ERROR]: strcpy error \n");
+		return -1;
+	}
+	free(pathName);
+	return 0;
+}
