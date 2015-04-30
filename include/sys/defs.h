@@ -1,7 +1,7 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
-#define NULL ((void*)0)
+#define NULL            ((void*)0)
 
 typedef unsigned long  uint64_t;
 typedef          long   int64_t;
@@ -36,6 +36,28 @@ static inline void io_wait(void) {
     __asm__ __volatile__( "jmp 1f\n\t"
                    "1:jmp 2f\n\t"
                    "2:" );
+}
+
+static inline void in_rsp(uint64_t rsp) {
+    __asm__ __volatile__("movq %0, %%rsp" 
+                        : : "r" (rsp)
+                        : "memory");
+}
+
+static inline uint64_t out_rsp() {
+    uint64_t rsp;
+    __asm__ __volatile__("movq %%rsp, %0"
+                        : "=r"(rsp)
+                        :: "memory");
+    return rsp;
+}
+
+static inline void switch_to_ring3() {
+    __asm__ __volatile__(   "movq $0x23, %rax;"\
+                            "movq %rax,  %ds;"\
+                            "movq %rax,  %es;"\
+                            "movq %rax,  %fs;"\
+                            "movq %rax,  %gs;");
 }
 
 #endif

@@ -1,12 +1,32 @@
-#include <sys/sbunix.h>
-#include <sys/defs.h>
+#include <sys/proc.h>
 #include <sys/isr.h>
 #include <sys/pic.h>
+#include <sys/gdt.h>
+#include <sys/common.h>
+#include <sys/sbunix.h>
+#include <sys/paging.h>
+#include <sys/phys_mem.h>
+#include <sys/virt_mem.h>
 
-void isr_0() {
-	printf("INT 0 haapen!\n");
-	pic_sendEOI(0);
+//isr 0
+void divided_by_zero_handler() {
+	perror("Cannot divided by zero");
 }
+//isr 10
+void tss_fault_handler() {
+    perror("Invalid tss");
+}
+//isr 13
+void gp_fault_handler() {
+	uint64_t fault_addr;
+	read_cr2(fault_addr);
+	printf("cr2: %p\n", fault_addr);
+	read_cr3(fault_addr);
+	printf("cr3: %p\n", fault_addr);
+    perror("General protection fault");
+}
+
+//----------General----------------
 void isr_1() {
 	printf("INT 1 haapen!\n");
 	pic_sendEOI(1);
@@ -43,10 +63,6 @@ void isr_9() {
 	printf("INT 9 haapen!\n");
 	pic_sendEOI(9);
 }
-void isr_10() {
-	printf("INT 10 haapen!\n");
-	pic_sendEOI(10);
-}
 void isr_11() {
 	printf("INT 11 haapen!\n");
 	pic_sendEOI(11);
@@ -54,14 +70,6 @@ void isr_11() {
 void isr_12() {
 	printf("INT 12 haapen!\n");
 	pic_sendEOI(12);
-}
-void isr_13() {
-	printf("INT 13 haapen!\n");
-	pic_sendEOI(13);
-}
-void isr_14() {
-	printf("INT 14 haapen!\n");
-	pic_sendEOI(14);
 }
 void isr_15() {
 	printf("INT 15 haapen!\n");

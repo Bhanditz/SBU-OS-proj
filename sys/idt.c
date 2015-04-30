@@ -34,13 +34,15 @@ void idt_entry_set(struct idt_entry_descriptor* idt_e, uint64_t offset, uint16_t
 }
 
 void setup_idt() {
-	//pit timer
+	//special handler
 	idt_entry_set(&idt_entry[32], (uint64_t)&isr_timer, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[33], (uint64_t)&isr_keyboard, 0x08, 0xE, 0);
-
+	idt_entry_set(&idt_entry[0], (uint64_t)&isr_dividedbyzero, 0x08, 0xE, 0);
+	idt_entry_set(&idt_entry[10], (uint64_t)&isr_tssfault, 0x08, 0xE, 0);
+	idt_entry_set(&idt_entry[13], (uint64_t)&isr_gpfault, 0x08, 0xE, 0);
+	idt_entry_set(&idt_entry[14], (uint64_t)&isr_pagefault, 0x08, 0xE, 0);
 
 	//the idt entry debugging
-	idt_entry_set(&idt_entry[0], (uint64_t)&isr0, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[1], (uint64_t)&isr1, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[2], (uint64_t)&isr2, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[3], (uint64_t)&isr3, 0x08, 0xE, 0);
@@ -50,11 +52,8 @@ void setup_idt() {
 	idt_entry_set(&idt_entry[7], (uint64_t)&isr7, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[8], (uint64_t)&isr8, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[9], (uint64_t)&isr9, 0x08, 0xE, 0);
-	idt_entry_set(&idt_entry[10], (uint64_t)&isr10, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[11], (uint64_t)&isr11, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[12], (uint64_t)&isr12, 0x08, 0xE, 0);
-	idt_entry_set(&idt_entry[13], (uint64_t)&isr13, 0x08, 0xE, 0);
-	idt_entry_set(&idt_entry[14], (uint64_t)&isr14, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[15], (uint64_t)&isr15, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[16], (uint64_t)&isr16, 0x08, 0xE, 0);
 	idt_entry_set(&idt_entry[17], (uint64_t)&isr17, 0x08, 0xE, 0);

@@ -5,7 +5,6 @@
     pushq 		%rdx
     pushq 		%rdi
     pushq 		%rsi
-    pushq 		%rsp
     pushq 		%rbp
     pushq 		%r8
     pushq 		%r9
@@ -27,7 +26,6 @@
     popq		%r9
     popq		%r8
     popq		%rbp
-    popq		%rsp
     popq		%rsi
     popq		%rdi
     popq		%rdx
@@ -54,19 +52,45 @@ isr_keyboard:
    sti
    iretq
 
-
-
-
-#general interrupt handler
-
-.globl   isr0
-isr0:
+.globl   isr_dividedbyzero
+isr_dividedbyzero:
    cli
    push_al
-   call        isr_0
+   call        divided_by_zero_handler
    pop_al
    sti
    iretq
+
+.globl   isr_tssfault
+isr_tssfault:
+   cli
+   push_al
+   movq %rsp, %rdi
+   call        tss_fault_handler
+   pop_al
+   add $0x10, %rsp
+   sti
+   iretq
+
+.globl   isr_gpfault
+isr_gpfault:
+   cli
+   push_al
+   call        gp_fault_handler
+   pop_al
+   sti
+   iretq
+
+.globl   isr_pagefault
+isr_pagefault:
+   cli
+   push_al
+   call        page_fault_handler
+   pop_al
+   sti
+   iretq
+
+#general interrupt handler
 
 .globl   isr1
 isr1:
@@ -149,15 +173,6 @@ isr9:
    sti
    iretq
 
-.globl   isr10
-isr10:
-   cli
-   push_al
-   call        isr_10
-   pop_al
-   sti
-   iretq
-
 .globl   isr11
 isr11:
    cli
@@ -172,24 +187,6 @@ isr12:
    cli
    push_al
    call        isr_12
-   pop_al
-   sti
-   iretq
-
-.globl   isr13
-isr13:
-   cli
-   push_al
-   call        isr_13
-   pop_al
-   sti
-   iretq
-
-.globl   isr14
-isr14:
-   cli
-   push_al
-   call        isr_14
    pop_al
    sti
    iretq

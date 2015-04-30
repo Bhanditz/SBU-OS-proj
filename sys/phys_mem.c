@@ -1,5 +1,6 @@
-#include <sys/mem.h>
 #include <sys/phys_mem.h>
+#include <sys/virt_mem.h>
+#include <sys/paging.h>
 #include <sys/common.h>
 #include <sys/sbunix.h>
 
@@ -10,11 +11,14 @@ volatile uint64_t 	frame_mem_size;
 volatile uint64_t 	frame_mem_base;
 volatile uint64_t  	frame_mem_ceil;
 volatile uint64_t* 	frame_allocator_map;
+volatile uint8_t*   frame_reference;
+
 
 
 void phys_init(uint64_t phys_base, uint64_t phys_free, uint64_t phys_size) {
 
 	frame_mem_base = phys_base + KERNEL_SIZE;
+	printf("frame_mem_base: %p\n", frame_mem_base);
 	frame_mem_size = phys_size - KERNEL_SIZE;
 	frame_mem_ceil = frame_mem_base + frame_mem_size;
 	free_frame_num = max_frame_num = frame_mem_size >> 12; //each frame 4kb, 2^12
@@ -30,6 +34,8 @@ void phys_init(uint64_t phys_base, uint64_t phys_free, uint64_t phys_size) {
 	frame_allocator_map = (uint64_t *)(KERNEL_SPACE_BASE + phys_free);
 	memset_byte((uint64_t *)frame_allocator_map, 0, max_frame_num);
 
+	frame_reference = (uint8_t*)frame_allocator_map + (max_frame_num>>3) + 2;
+    memset((void*)frame_reference, 0, max_frame_num);
 }
 
 uint64_t frame_allocator() {
@@ -50,6 +56,8 @@ uint64_t frame_allocator() {
 				frame_addr = frame_mem_base + (((offset << 6) + bit_offset) << 12);
 				//reduce the free frame number record
 				free_frame_num--;
+				//increase the frame reference
+				frame_reference[(frame_addr-frame_mem_base)>>12]++;
 				break;
 			}
 		}
@@ -61,25 +69,34 @@ uint64_t frame_allocator() {
 	return frame_addr;
 }
 
-void frame_freer(uint64_t frame_addr) {
+void frame_freer(uint64_t phys_addr, uint64_t zero) {
 
 	uint32_t frame_index, offset, bit_offset;
+	uint64_t virt_addr = virt_ptr;
+	uint64_t *pte;
 
-	if(frame_addr < frame_mem_base || frame_addr >= frame_mem_ceil) {
+	if(phys_addr < frame_mem_base || phys_addr >= frame_mem_ceil) {
 		perror("Segmentation fault");
 	}
 
-	frame_index = (frame_addr - frame_mem_base) >> 12;
+	frame_index = (phys_addr - frame_mem_base) >> 12;
 	offset = frame_index >> 6;
 	bit_offset = frame_index & 0x3F; //equal to frame_index % 64
 
-	//empty the frame from virtual address
-	//...
-
-	//mark the bit into free
-	frame_allocator_map[offset] &= ~(1 << bit_offset);
-	//increase the free frame number record
-	free_frame_num++;
+	frame_reference[frame_index]--;
+	if(!frame_reference[frame_index]){
+		if(zero) {
+			//empty the frame from virtual address
+			map_v_to_p(virt_addr, phys_addr, P_PRESENT | P_READ_WRITE | P_USER_SUPERVISOR);
+			memset((void*)virt_addr, 0, 0x1000);
+			pte = get_pte(virt_addr);
+			*pte = 0x0;
+		}
+		//mark the bit into free
+		frame_allocator_map[offset] &= ~(1 << bit_offset);
+		//increase the free frame number record
+		free_frame_num++;
+	}
 
 }
 

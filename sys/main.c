@@ -4,10 +4,19 @@
 #include <sys/idt.h>
 #include <sys/irq.h>
 #include <sys/tarfs.h>
-#include <sys/mem.h>
 #include <sys/phys_mem.h>
-#include <sys/kalloc.h>
+#include <sys/virt_mem.h>
 #include <sys/paging.h>
+#include <sys/proc.h>
+#include <sys/tarfs.h>
+#include <sys/elf.h>
+#include <sys/kstring.h>
+
+#define INITIAL_STACK_SIZE 4096
+char stack[INITIAL_STACK_SIZE];
+uint32_t* loader_stack;
+extern char kernmem, physbase;
+struct tss_t tss;
 
 void start(uint32_t* modulep, void* physbase, void* physfree)
 {
@@ -34,13 +43,20 @@ void start(uint32_t* modulep, void* physbase, void* physfree)
 	//debug
 	phys_init(phys_base, (uint64_t)physfree, phys_size);
 	paging_init();
-}
 
-#define INITIAL_STACK_SIZE 4096
-char stack[INITIAL_STACK_SIZE];
-uint32_t* loader_stack;
-extern char kernmem, physbase;
-struct tss_t tss;
+	printf("_binary_tarfs_start: %p\n", &_binary_tarfs_start);
+    printf("_binary_tarfs_end: %p\n", &_binary_tarfs_end);
+
+	//------------for test-------------
+	// Schedule an Primal Kernel Process 
+    create_primal_proc();
+
+    // Create an init process to invoke shell
+    load_proc("bin/hello", NULL);
+
+    //schedule_flag = 0x1;
+
+}
 
 void boot(void)
 {
@@ -51,6 +67,7 @@ void boot(void)
 		:"=g"(loader_stack)
 		:"r"(&stack[INITIAL_STACK_SIZE])
 	);
+
 	reload_gdt();
 	setup_tss();
 	reload_idt();

@@ -1,9 +1,14 @@
+#include <sys/defs.h>
+
 //the preset interrupt
-extern void isr_timer(); // INT 32
-extern void isr_keyboard();	 // INT 33
+extern void isr_timer(); 			// INT 32
+extern void isr_keyboard();	 		// INT 33
+extern void isr_dividedbyzero();	// INT 0
+extern void isr_tssfault();			// INT 10
+extern void isr_gpfault();			// INT 13
+extern void isr_pagefault();		// INT 14
 
 // The methods accesses the addresses of the ASM ISR handlers.
-extern void isr0();
 extern void isr1();
 extern void isr2();
 extern void isr3();
@@ -17,7 +22,6 @@ extern void isr10();
 extern void isr11();
 extern void isr12();
 extern void isr13();
-extern void isr14();
 extern void isr15();
 extern void isr16();
 extern void isr17();
